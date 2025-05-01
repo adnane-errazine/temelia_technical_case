@@ -6,9 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "accelerate>=0.26.0",
+    "cohere>=5.15.0",
     "dotenv>=0.9.9",
     "einops>=0.8.1",
     "fastembed>=0.6.1",
+    "gradio>=5.28.0",
     "langchain>=0.3.24",
     "langchain-community>=0.3.23",
     "langchain-openai>=0.3.14",

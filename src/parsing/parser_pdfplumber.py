@@ -1,6 +1,7 @@
 from pathlib import Path
 import pdfplumber
 import pandas as pd
+from tqdm import tqdm
 
 def parse_document(path: Path) -> pd.DataFrame:
     """
@@ -14,7 +15,7 @@ def parse_document(path: Path) -> pd.DataFrame:
     all_texts = []
 
     with pdfplumber.open(path) as pdf:
-        for page_num, page in enumerate(pdf.pages, start=1):
+        for page_num, page in tqdm(enumerate(pdf.pages, start=1), total=len(pdf.pages), desc=f"Parsing {path.name}"):
             text = page.extract_text() or ""  # Handle empty pages
             # Clean text
             cleaned_text = text.strip()

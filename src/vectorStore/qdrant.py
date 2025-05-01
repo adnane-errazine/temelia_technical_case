@@ -75,41 +75,48 @@ def upsert_embeddings_from_df(collection: str, df_input: pd.DataFrame, batch_siz
             - metadata: additional metadata (dict or string representation of dict)
             - dense_embedding: dense embedding vector (list/string of floats, size 1024)
             - sparse_embedding: sparse embedding vector
-            - sparse_indices: list of integer indices (optional)
-            - sparse_values: list of float weights (optional)
+            - sparse_indices: list of integer indices
+            - sparse_values: list of float weights
         batch_size (int): Number of points to upsert in each batch. Defaults to 100.
     """
-    qdrant_client = get_qdrant_client()
-    print(f"Starting upsert process for collection '{collection}' with {len(df_input)} rows.")
-    batch = []
-    for _, row in df_input.iterrows():
-        # Prepare dense list
-        dense_vec = row["dense_embedding"]
-        # Prepare sparse vectors
-        sparse_vec = models.SparseVector(indices=list(row["sparse_indices"]),
-                                         values=list(row["sparse_values"]))
-        # Build point
-        point = models.PointStruct(
-            id=row["chunk_id"],
-            vector={
-                "dense": dense_vec,
-                "sparse": sparse_vec
-            },
-            payload={
-                "chunk_text": row.get("chunk_text", ""),
-                "filename": row.get("filename", ""),
-                "page": row.get("page", -1),
-                "token_count": row.get("token_count", 0),
-                "metadata": row.get("metadata", {}),
-            }
-        )
-        batch.append(point)
-        if len(batch) >= batch_size:
+    try:
+        qdrant_client = get_qdrant_client()
+        print(f"Starting upsert process for collection '{collection}' with {len(df_input)} rows.")
+        batch = []
+        for _, row in df_input.iterrows():
+            # Prepare dense list
+            dense_vec = row["dense_embedding"]
+            # Prepare sparse vectors
+            sparse_vec = models.SparseVector(indices=list(row["sparse_indices"]),
+                                            values=list(row["sparse_values"]))
+            # Build point
+            point = models.PointStruct(
+                id=row["chunk_id"],
+                vector={
+                    "dense": dense_vec,
+                    "sparse": sparse_vec
+                },
+                payload={
+                    "chunk_text": row.get("chunk_text", ""),
+                    "filename": row.get("filename", ""),
+                    "page": row.get("page", -1),
+                    "token_count": row.get("token_count", 0),
+                    "metadata": row.get("metadata", {}),
+                }
+            )
+            batch.append(point)
+            if len(batch) >= batch_size:
+                qdrant_client.upsert(collection_name=collection, points=batch, wait=True)
+                batch = []
+        if batch:
             qdrant_client.upsert(collection_name=collection, points=batch, wait=True)
-            batch = []
-    if batch:
-        qdrant_client.upsert(collection_name=collection, points=batch, wait=True)
-    print(f"Upserted {len(df_input)} points into '{collection}'")
+        print(f"Upserted {len(df_input)} points into '{collection}'")
+    except ConnectionError as ce:
+        print(f"ERROR: Could not connect to Qdrant for upsert: {ce}")
+        raise
+    except Exception as e:
+        print(f"ERROR: Failed during upsert to '{collection}': {e}")
+        raise
 
 
 if __name__ == "__main__":

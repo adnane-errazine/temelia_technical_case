@@ -1,7 +1,6 @@
 from pathlib import Path
 import pandas as pd
 import uuid
-from typing import Callable
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import tiktoken

@@ -3,22 +3,34 @@ from src.embeddings.dense import DenseEmbedder
 from qdrant_client import models
 
 class HybridRetriever:
-    def __init__(self, qdrant_client, collection_name: str, dense_embedder: DenseEmbedder):
+    def __init__(self, qdrant_client, dense_embedder: DenseEmbedder):
         self.client = qdrant_client
-        self.collection = collection_name
         self.dense_embedder = dense_embedder
         self.SPARSE_MODEL = "Qdrant/bm25"
         
         
-    def retrieve(self, text: str,dense_limit:int = 50, sparse_limit:int = 50, final_limit:str=None) -> list[dict]:
+    def retrieve(self, text: str, qdrant_collection:str ,dense_limit:int = 50, sparse_limit:int = 50, final_limit:str=None) -> list[dict]:
         """
-        Single-call hybrid retrieval: two Prefetches (sparse + dense)
-        fused via RRF on the server.
+        Perform a hybrid retrieval of documents using sparse and dense embeddings
+        fused via Reciprocal Rank Fusion (RRF).
+        Args:
+            text (str): The query string to retrieve relevant documents for.
+            dense_limit (int, optional): Maximum number of dense embedding matches to fetch.
+                Defaults to 50.
+            sparse_limit (int, optional): Maximum number of sparse embedding matches to fetch.
+                Defaults to 50.
+            final_limit (int | None, optional): Maximum number of total results to return
+                after fusion. If None, defaults to sparse_limit + dense_limit.
+        Returns:
+            list[dict]: A list of result dictionaries, each containing:
+                - "id": Unique identifier of the document.
+                - "payload": The stored document payload.
+                - "score": Fusion score indicating relevance.
         """
         dense_emb = self.dense_embedder.embed_query(text).tolist()
 
         response = self.client.query_points(
-            collection_name=self.collection,
+            collection_name=qdrant_collection,
             prefetch=[
                 models.Prefetch(
                     query=models.Document(text=text, model=self.SPARSE_MODEL),
@@ -47,12 +59,13 @@ if __name__ == "__main__":
     dense_embedder = DenseEmbedder()
     qdrant_client = get_qdrant_client()
     COLLECTION_NAME = "test_collection"
-    retriever = HybridRetriever(qdrant_client= qdrant_client, collection_name= "test_collection", dense_embedder=dense_embedder)
+    retriever = HybridRetriever(qdrant_client= qdrant_client, dense_embedder=dense_embedder)
 
     # Example query:
     question = "Quelles sont les exigences minimum requises pour les dispositifs d’isolation?"
     sparse_hits = retriever.retrieve(
         text=question,
+        qdrant_collection=COLLECTION_NAME,
         #dense_limit=4,
         #sparse_limit=4,
     )
