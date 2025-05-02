@@ -4,17 +4,18 @@ from pathlib import Path
 
 # Initialize the model once globally or pass it to the function
 
+
 class SparseEmbedder:
     def __init__(self, model_name: str = "Qdrant/bm25"):
         """
         Initialize the SparseEmbedder with the specified model.
-        
+
         Args:
             model_name: The name of the sparse embedding model to use.
         """
         self.model = SparseTextEmbedding(model_name=model_name)
 
-    def embed_df_chunked(self,df_input: pd.DataFrame) -> pd.DataFrame:
+    def embed_df_chunked(self, df_input: pd.DataFrame) -> pd.DataFrame:
         """
         Generates sparse embeddings for text chunks in a DataFrame and adds them
         as a new column.
@@ -24,7 +25,7 @@ class SparseEmbedder:
 
         Returns:
             DataFrame with a new 'sparse_embedding' column containing the embeddings.
-            
+
             # Note: added:
             - 'sparse_indices': list of integer indices
             - 'sparse_values' : list of float weights
@@ -51,11 +52,12 @@ class SparseEmbedder:
             #      emb.values  is a numpy array of floats
             indices_list.append(emb.indices.tolist())
             values_list.append(emb.values.tolist())
-        
+
         df_input["sparse_indices"] = indices_list
         df_input["sparse_values"] = values_list
         #########
         return df_input
+
 
 if __name__ == "__main__":
     input_df = Path("data/tempo_output/output_chunked_with_embeddings.csv")
@@ -67,5 +69,7 @@ if __name__ == "__main__":
     output_df = sparse_embedder.embed_df_chunked(test_df)
     print("Sparse embeddings generated.")
     # Save the DataFrame with embeddings to a new CSV file
-    output_df.to_csv("data/tempo_output/output_chunked_with_embeddings_and_sparse.csv", index=False)
+    output_df.to_csv(
+        "data/tempo_output/output_chunked_with_embeddings_and_sparse.csv", index=False
+    )
     print("Sparse embeddings added and saved to CSV.")

@@ -6,7 +6,7 @@ A Retrieval-Augmented Generation (RAG) system specialized for construction and b
 
 ## Overview
 
-Temelion AI is an intelligent assistant that helps construction engineers and building professionals query technical documents. It uses advanced natural language processing and hybrid search techniques to provide precise answers from complex PDFs, with references to the source material.
+TemelIA is an intelligent assistant that helps construction engineers and building professionals query technical documents. It uses advanced natural language processing and hybrid search techniques to provide precise answers from complex PDFs, with references to the source material.
 
 ### Key Features
 
@@ -34,51 +34,65 @@ Temelion AI is an intelligent assistant that helps construction engineers and bu
 
 ### Components
 
-- **Parser**: Extracts text from PDFs using pdfplumber or Vision Language Models
-- **Chunker**: Splits text into semantically coherent, token-aware chunks
-- **Embeddings**: 
-  - Dense: Multilingual-E5-large-instruct (1024 dimensions)
-  - Sparse: Qdrant/bm25 implementation
-- **Vector Store**: Qdrant for efficient similarity search
-- **Retrieval**: Hybrid search combining dense and sparse results with RRF fusion
-- **Reranker**: Cohere's rerank-v3.5 model for improved result relevance
-- **LLM**: OpenAI models (gpt-4o-mini) for answer generation
-- **Frontend**: Gradio-based interactive web interface
+- **Parser**: Extracts text from PDFs using various methods:
+    - `pdfplumber`: Standard PDF text extraction.
+    - `Markitdown`: Markdown conversion for structured text.
+    - `Mistral`: LLM-based parsing (potentially OCR or structured extraction).
+    - `VLM`: Vision Language Model for complex layouts/images.
+- **Chunker**: Splits text into semantically coherent, token-aware chunks using `langchain.text_splitter.RecursiveCharacterTextSplitter`.
+- **Embeddings**:
+  - Dense: `intfloat/multilingual-e5-large-instruct` (1024 dimensions) via `src/embeddings/dense.py`
+  - Sparse: Qdrant's built-in BM25/SPLADE implementation via `src/embeddings/sparse.py`
+- **Vector Store**: Qdrant for efficient similarity search (`src/vectorStore/qdrant.py`)
+- **Retrieval**: Hybrid search combining dense and sparse results with Reciprocal Rank Fusion (RRF) (`src/retrieval/retriever.py`)
+- **Reranker**: Cohere's `rerank-v3.5` model for improved result relevance (`src/agent/rag_answerer.py`)
+- **Query Reformulation**: Enhances user queries for better retrieval using a smaller LLM (`gpt-4.1-nano`) via Langchain (`src/agent/query_enhancer.py`)
+- **LLM**: OpenAI models (`gpt-4.1` by default) for answer generation, orchestrated with Langchain (`src/agent/rag_answerer.py`)
+- **Memory**: Manages conversation history using `langchain.memory.ConversationBufferMemory` (`src/agent/memory.py`).
+- **Frontend**: Gradio-based interactive web interface (`app.py`)
+- **Langchain Framework**: Used throughout the agent and parsing components for prompt templating (`ChatPromptTemplate`), LLM interaction (`ChatOpenAI`), text splitting, and memory management.
 
 ## Installation
 
 ### Prerequisites
 
 - Python 3.12+
-- [Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (for certain dependencies)
+- [Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (Required for building some dependencies like `flash-attn` or `triton` on Windows)
 - CUDA support recommended for GPU acceleration
 
 ### Environment Setup
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/temelion.git
+   git clone https://github.com/adnane-errazine/temelia 
    cd temelion
    ```
-
-2. Create a virtual environment:
+2. Install dependencies using [UV](https://github.com/astral-sh/uv):
    ```bash
+   # Create a virtual environment (recommended)
    python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
 
-3. Install dependencies:
-   ```bash
-   pip install -e .
-   ```
+   # Activate the virtual environment
+   # On Windows
+   .venv\\Scripts\\activate
+   # On macOS/Linux
+   # source .venv/bin/activate
 
-4. Create a `.env` file in the project root with the following variables:
+   # Install UV if you don't have it
+   pip install uv
+
+   # Install project dependencies using uv sync (reads pyproject.toml)
+   uv sync
    ```
+   *Note: Some dependencies might require specific build tools (like VS C++ Build Tools on Windows) or have platform-specific installation steps. Refer to individual package documentation if `uv sync` encounters issues.*
+
+3. Create a `.env` file in the project root with the following variables:
+   ```dotenv
    OPENAI_API_KEY=your_openai_api_key
    COHERE_API_KEY=your_cohere_api_key
-   QDRANT_URL=your_qdrant_url
-   QDRANT_API_KEY=your_qdrant_api_key
-   QDRANT_COLLECTION_NAME=test_collection
+   QDRANT_URL=your_qdrant_url # e.g., http://localhost:6333 or cloud URL
+   QDRANT_API_KEY=your_qdrant_api_key # Optional, depending on Qdrant setup
+   QDRANT_COLLECTION_NAME=test_collection # Or your preferred collection name
    ```
 
 ## Usage
@@ -127,7 +141,7 @@ The system is optimized for technical questions about construction specification
 
 ### LLM Settings
 
-- The system uses `gpt-4o-mini` by default
+- The system uses `gpt-4.1` by default
 - To change the model, modify the model name in `src/agent/rag_answerer.py`
 
 ### Retrieval Parameters
@@ -138,9 +152,28 @@ Adjust retrieval parameters in `src/agent/orchestrator.py`:
 orchestrator.ask_pipeline(
     user_question=question,
     qdrant_collection=collection_name,
-    dense_limit=20,    # Number of dense results to retrieve
-    sparse_limit=20,   # Number of sparse results to retrieve
-    top_k_reranker=15  # Number of results after reranking
+    dense_limit=40,    # Number of dense results to retrieve
+    sparse_limit=40,   # Number of sparse results to retrieve
+    top_k_reranker=20  # Number of results after reranking
+)
+```
+
+### Chunking Strategy
+
+- **Method**: The text is split into chunks using `langchain.text_splitter.RecursiveCharacterTextSplitter` based on the `tiktoken` tokenizer for the specified model.
+- **Default Parameters** (in `src/ingestion/ingest_pdf.py`):
+    - `model_name`: "gpt-4o" (used for token counting)
+    - `chunk_size`: 256 tokens
+    - `chunk_overlap`: 60 tokens
+- **Customization**: To change the chunking strategy, modify the parameters passed to the `chunk_texts` function within the `process_pdf` function in `src/ingestion/ingest_pdf.py`.
+
+```python
+# Example from src/ingestion/ingest_pdf.py
+chunked_df = chunk_texts(
+    parsed_df,
+    model_name="gpt-4o", # Tokenizer model
+    chunk_size=256,      # Max tokens per chunk
+    chunk_overlap=60,    # Token overlap between chunks
 )
 ```
 

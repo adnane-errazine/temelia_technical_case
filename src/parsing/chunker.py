@@ -6,7 +6,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import tiktoken
 
 
-def num_tokens_from_string(string: str, model_name: str)-> int:
+def num_tokens_from_string(string: str, model_name: str) -> int:
     """
     Returns the number of tokens in a text string using the provided encoder.
     """
@@ -17,26 +17,23 @@ def num_tokens_from_string(string: str, model_name: str)-> int:
 
 
 def chunk_texts(
-    df: pd.DataFrame,
-    model_name: str,
-    chunk_size: int = 256,
-    chunk_overlap: int = 30
+    df: pd.DataFrame, model_name: str, chunk_size: int = 256, chunk_overlap: int = 30
 ) -> pd.DataFrame:
     """
     Token-aware chunking of a DataFrame of texts.
-    
+
     Args:
         df: DataFrame with columns ["page", "text", "filename"].
         model_name: Name of the model whose tokenizer to use (e.g. "gpt-4o", "claude-2.0").
         chunk_size: max tokens per chunk.
         chunk_overlap: tokens to overlap between chunks.
-    
+
     Returns:
         DataFrame with columns ["chunk_id","chunk_text","page","filename","token_count"].
     """
     if df.empty:
         raise ValueError("Input DataFrame is empty.")
-    
+
     # 1) Get encoder for specified model
 
     # 2) Build a token-based recursive splitter
@@ -55,35 +52,40 @@ def chunk_texts(
         splits = splitter.split_text(text)
         for fragment in splits:
             clean = fragment.strip()
-            all_chunks.append({
-                "chunk_id": str(uuid.uuid4()),
-                "chunk_text": clean,
-                "page": row["page"],
-                "filename": row["filename"],
-                "token_count": num_tokens_from_string(clean, model_name),
-                "metadata": row.get("metadata", {}),
-            })
+            all_chunks.append(
+                {
+                    "chunk_id": str(uuid.uuid4()),
+                    "chunk_text": clean,
+                    "page": row["page"],
+                    "filename": row["filename"],
+                    "token_count": num_tokens_from_string(clean, model_name),
+                    "metadata": row.get("metadata", {}),
+                }
+            )
 
     return pd.DataFrame(all_chunks)
+
 
 if __name__ == "__main__":
     # 1) Load parsed PDF (page-level) DataFrame
     parsed = pd.read_csv("data/tempo_output/output_pdfplumber.csv", sep=",")
 
     # 2) Choose your model (e.g. "gpt-4o", "claude-2.0")
-    model_name_tokenizer = "gpt-4o"         # for GPT-4 Nano
+    model_name_tokenizer = "gpt-4o"  # for GPT-4 Nano
     # model_to_test = "claude-2.0"   # for Anthropic Claude V2
 
     # 3) Chunk and count tokens
-    chunks_df = chunk_texts(parsed, model_name=model_name_tokenizer, chunk_size=256, chunk_overlap=30)
+    chunks_df = chunk_texts(
+        parsed, model_name=model_name_tokenizer, chunk_size=256, chunk_overlap=30
+    )
 
     # 4) Save
     out_path = Path("data/tempo_output/output_chunked.csv")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     chunks_df.to_csv(out_path, index=False, sep=",", encoding="utf-8")
-    print(f"Saved {len(chunks_df)} chunks using {model_name_tokenizer} tokenizer to {out_path}")
-
-
+    print(
+        f"Saved {len(chunks_df)} chunks using {model_name_tokenizer} tokenizer to {out_path}"
+    )
 
 
 # Notes:
@@ -94,17 +96,17 @@ if __name__ == "__main__":
 #     chunk_size: int = 256,
 #     chunk_overlap: int = 30
 # ) -> pd.DataFrame:
-    
+
 #     For each filename, concatenate its pages in order (inserting a page-break token),
 #     split into ~chunk_size tokens, then record which pages each chunk covers.
-    
+
 #     Returns a DataFrame with:
 #       - chunk_id
 #       - chunk_text
 #       - pages: list of page numbers this chunk spans
 #       - filename
 #       - token_count
-    
+
 #     encoder = get_encoder_for_model(model_name)
 #     splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
 #         model_name=model_name,

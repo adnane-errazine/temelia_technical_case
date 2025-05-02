@@ -3,6 +3,7 @@ import pdfplumber
 import pandas as pd
 from tqdm import tqdm
 
+
 def parse_document(path: Path) -> pd.DataFrame:
     """
     Parse a PDF document into a DataFrame with page, text, and filename columns.
@@ -15,23 +16,28 @@ def parse_document(path: Path) -> pd.DataFrame:
     all_texts = []
 
     with pdfplumber.open(path) as pdf:
-        for page_num, page in tqdm(enumerate(pdf.pages, start=1), total=len(pdf.pages), desc=f"Parsing {path.name}"):
+        for page_num, page in tqdm(
+            enumerate(pdf.pages, start=1),
+            total=len(pdf.pages),
+            desc=f"Parsing {path.name}",
+        ):
             text = page.extract_text() or ""  # Handle empty pages
             # Clean text
             cleaned_text = text.strip()
-            cleaned_text = ' '.join(cleaned_text.split())  # collapse multiple spaces
-            all_texts.append({
-                "page": page_num,
-                "text": cleaned_text,
-                "filename": path.name
-            })
+            cleaned_text = " ".join(cleaned_text.split())  # collapse multiple spaces
+            all_texts.append(
+                {"page": page_num, "text": cleaned_text, "filename": path.name}
+            )
 
     df = pd.DataFrame(all_texts)
     df = df[df["text"] != ""]  # Remove empty pages
     df = df.reset_index(drop=True)
-    df["metadata"]= "metadata placeholder"  # Placeholder for metadata, can be customized
+    df["metadata"] = (
+        "metadata placeholder"  # Placeholder for metadata, can be customized
+    )
 
     return df
+
 
 if __name__ == "__main__":
     output_path = Path("data/tempo_output/output_pdfplumber.csv")

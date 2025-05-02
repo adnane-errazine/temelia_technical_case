@@ -63,3 +63,10 @@ logs/
 # Jupyter Notebooks
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
+
+
+
+
+# Legacy files
+
+legacy/

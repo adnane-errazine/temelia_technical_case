@@ -5,8 +5,7 @@
 
 ## Parsing phase
 1. Input document (installed dependencies onloy for PDF and DOCX but it's possible to parse Images(OCR), HTML, etc)
-2. document to text: Markitdown tool  (Quick win, 80/20 rule)
-3. Embedding
+2. Embedding
 
 
 
@@ -16,16 +15,16 @@
 - Sparse embedder: Qdrant/bm25 (Library: SparseTextEmbedding)
 - Vector store: Qdrant (French -> RGPD)
 - dense embeddings, vector store : qdrant
-- sparse embeddings BM25, qdrant too?
-- Reranker-> Cohere reranker (#TODO)
+- Reranker-> Cohere reranker
 
 
 ## Agentic workflow 
 0. User query
 1. rephrase / Enhance user question if necessary (Out of scope but a good option: data augmentation, Query enrichment through thesaurus / domain knowledge)
-2. Retrieve Best 50 matches from the dense embeddings
-3. Retrieve Best 50 matches from the sparse embeddings
-4. Combine matches then use a reranker to output best 15 match
+2. Retrieve Best 40 matches from the dense embeddings
+3. Retrieve Best 40 matches from the sparse embeddings
+RRF
+4. Combine matches then use a reranker to output best 20 match
 5. Invoke LLM to answer the query given the context and offer the references.
 6. Output the answer
 
@@ -99,7 +98,7 @@ During the demo, we will test your demo with some non-disclosed questions on the
 
 
 
-# TODO 
+# DRAFT / TO KEEP IN MIND
 
 requirements: # uv bugs
 uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
@@ -122,14 +121,3 @@ Installed 1 package in 122ms
 
 
  https://qdrant.tech/articles/hybrid-search/
-
-
-
-VLM   / parse output UUID transformer / explicitly add to prompt, if question is unrelated. output: out of bound
-
-
-
-
-
-
-

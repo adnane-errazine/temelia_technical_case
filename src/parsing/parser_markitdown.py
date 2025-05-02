@@ -6,6 +6,7 @@ from markitdown import MarkItDown
 # initialize the converter once
 _md = MarkItDown()
 
+
 def parse_document(path: Path) -> pd.DataFrame:
     """
     Parse a single document (PDF, DOCX, HTML, images, etc.) into a DataFrame with page, text, and filename.
@@ -24,14 +25,19 @@ def parse_document(path: Path) -> pd.DataFrame:
     df = pd.DataFrame(texts, columns=["text"])
     df["page"] = df.index + 1  # page number (always 1 unless you split)
     df = df[["page", "text"]]  # rearrange columns
-    df["text"] = df["text"].str.replace("\n", " ", regex=False)  # Replace newlines with spaces
-    df["text"] = df["text"].str.replace(" +", " ", regex=True)  # Replace multiple spaces with a single space
+    df["text"] = df["text"].str.replace(
+        "\n", " ", regex=False
+    )  # Replace newlines with spaces
+    df["text"] = df["text"].str.replace(
+        " +", " ", regex=True
+    )  # Replace multiple spaces with a single space
     df["text"] = df["text"].str.strip()  # Remove leading/trailing spaces
     df = df[df["text"] != ""]  # Remove empty rows
     df = df.reset_index(drop=True)
     df["filename"] = path.name  # Add filename column
 
     return df
+
 
 if __name__ == "__main__":
     # Example usage
