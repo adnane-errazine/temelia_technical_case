@@ -1,6 +1,6 @@
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-# from src.config import OPENAI_API_KEY
+from src.config import OPENAI_API_KEY
 
 # Prompt template for reformulating queries
 system_template = """
@@ -34,7 +34,7 @@ chat_prompt = ChatPromptTemplate.from_messages(
 )
 
 
-enhancer_llm = ChatOpenAI(model_name="gpt-4.1-nano", temperature=0)
+enhancer_llm = ChatOpenAI(model_name="gpt-4.1-nano", temperature=0, api_key=OPENAI_API_KEY)
 
 
 def enhance_query(question_input: str) -> str:
