@@ -61,7 +61,7 @@ def process_pdf(
         chunked_df = chunk_texts(
             parsed_df,
             model_name=model_name,
-            chunk_size=256,
+            chunk_size=384,
             chunk_overlap=60,
         )
         chunk_time = time.time() - chunk_start

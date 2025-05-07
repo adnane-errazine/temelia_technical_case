@@ -12,7 +12,7 @@ TemelIA is a specialized Retrieval‑Augmented Generation (RAG) application ta
    - **pdfplumber** for baseline text extraction (insufficient for some French‑specific formats)  
    - **Markitdown** for structured Markdown conversion (similarly limited on French technical layouts)  
    - **Mistral** (cloud‑based LLM parsing) good price‑performance ratio (≈ $1 per 1 000 pages)  
-   - **Local VLM** (“OpenGVLab/InternVL3-1B”) for OCR and layout analysis on sensitive documents  
+   - **Local VLM** (“OpenGVLab/InternVL3-1B”) for OCR and layout analysis on sensitive documents
 
 ### Chunking & Embedding  
 - **Chunker**: `RecursiveCharacterTextSplitter` (256 token chunks, 60 token overlap, using the GPT‑4o tokenizer).  
@@ -70,12 +70,12 @@ TemelIA is a specialized Retrieval‑Augmented Generation (RAG) application ta
   - The Cohere reranker significantly improved top‑k precision.  
   - Local VLM processing enabled GDPR‑compliant handling of sensitive documents.  
 - **Challenges**:  
-  - Installing GPU‑optimized libraries (flash‑attn/triton) on Windows was complex.  
+  - Installing GPU‑optimized libraries (flash‑attn/triton) on Windows was complex.  ( Prepared 1 package in 392m 15s Installed 1 package in 122ms + flash-attn==2.7.3)
   - Limited memory and compute resources constrained batch sizes and throughput.  
 - **Future Directions**:  
   - Advanced query enrichment using LangGraph or similar agentic workflows.  
   - Enhanced parsing pipeline for images: detection → classification → information extraction → chunk integration.  
-  - Semantic‑ and context‑aware chunking (e.g., section embeddings, hierarchical splits).  
+  - Semantic and context‑aware chunking (e.g., section embeddings, hierarchical splits).  
   - Production‑grade improvements: FastAPI backend, Dockerization, test suite, evaluation dataset, batch optimization, monitoring, and security hardening.
 
 ---

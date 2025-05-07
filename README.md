@@ -21,13 +21,13 @@ TemelIA is an intelligent assistant that helps construction engineers and buildi
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Document  │────▶│    Parse    │────▶│    Chunk    │────▶│   Embed     │
+│   Document  │────▶│    Parse    │────▶│    Chunk    │────▶│   Embed    │
 │   Upload    │     │    PDF      │     │    Text     │     │   Chunks    │
 └─────────────┘     └─────────────┘     └─────────────┘     └──────┬──────┘
                                                                    │
                                                                    ▼
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Generate  │◀────│   Rerank    │◀────│   Hybrid    │◀────│   Vector    │
+│   Generate  │◀────│   Rerank    │◀────│   Hybrid   │◀────│   Vector   │
 │   Answer    │     │   Results   │     │   Search    │     │   Store     │
 └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
 ```
